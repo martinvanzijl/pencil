@@ -135,10 +135,12 @@ void MoveTool::pressOperation(QMouseEvent* event, Layer* layer)
 
         if (mScribbleArea->somethingSelected) // there is an area selection
         {
-            if (event->modifiers() != Qt::ShiftModifier && !selectionRect.contains(getCurrentPoint()))
-                mScribbleArea->deselectAll();
+            // Below will return true if a corner point was in range of the click.
+            bool cornerPointInRange = whichTransformationPoint();
 
-            whichTransformationPoint();
+            if (event->modifiers() != Qt::ShiftModifier && !selectionRect.contains(getCurrentPoint())
+                    && !cornerPointInRange)
+                mScribbleArea->deselectAll();
 
             // calculate new transformation in case click only
             mScribbleArea->calculateSelectionTransformation();
@@ -209,26 +211,38 @@ void MoveTool::actionOnVector(QMouseEvent* event, Layer* layer)
     }
 }
 
-void MoveTool::whichTransformationPoint()
+bool MoveTool::whichTransformationPoint()
 {
-    QRectF transformPoint = mScribbleArea->myTransformedSelection;
+    QRectF transformPoint = mScribbleArea->myTransformedSelection;    
 
-    if (QLineF(getLastPoint(), transformPoint.topLeft()).length() < 10)
+    // Give the user a margin to select a corner point.
+    bool cornerInRange = false;
+    const double marginInPixels = 12;
+    const double scale = mEditor->view()->getView().inverted().m11();
+    const double scaledMargin = fabs(marginInPixels * scale);
+
+    if (QLineF(getLastPoint(), transformPoint.topLeft()).length() < scaledMargin)
     {
         mScribbleArea->setMoveMode(ScribbleArea::TOPLEFT);
+        cornerInRange = true;
     }
-    if (QLineF(getLastPoint(), transformPoint.topRight()).length() < 10)
+    if (QLineF(getLastPoint(), transformPoint.topRight()).length() < scaledMargin)
     {
         mScribbleArea->setMoveMode(ScribbleArea::TOPRIGHT);
+        cornerInRange = true;
     }
-    if (QLineF(getLastPoint(), transformPoint.bottomLeft()).length() < 10)
+    if (QLineF(getLastPoint(), transformPoint.bottomLeft()).length() < scaledMargin)
     {
         mScribbleArea->setMoveMode(ScribbleArea::BOTTOMLEFT);
+        cornerInRange = true;
     }
-    if (QLineF(getLastPoint(), transformPoint.bottomRight()).length() < 10)
+    if (QLineF(getLastPoint(), transformPoint.bottomRight()).length() < scaledMargin)
     {
         mScribbleArea->setMoveMode(ScribbleArea::BOTTOMRIGHT);
+        cornerInRange = true;
     }
+
+    return cornerInRange;
 }
 
 void MoveTool::transformSelection(qreal offsetX, qreal offsetY)

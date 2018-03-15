@@ -1001,6 +1001,23 @@ void ScribbleArea::paintEvent(QPaintEvent* event)
                 }
                 painter.drawPolygon(tempRect);
 
+                // -------------------------------------------------------------
+                // Temporary: Show the click-and-drag margins with green
+                // circles.
+
+                painter.setBrush(QColor(0, 255, 0, 50));
+                painter.setPen(Qt::green);
+
+                const double marginInPixels = 12;
+                QRectF selectionRect( tempRect.boundingRect() );
+                painter.drawEllipse(selectionRect.topLeft(), marginInPixels, marginInPixels);
+                painter.drawEllipse(selectionRect.topRight(), marginInPixels, marginInPixels);
+                painter.drawEllipse(selectionRect.bottomRight(), marginInPixels, marginInPixels);
+                painter.drawEllipse(selectionRect.bottomLeft(), marginInPixels, marginInPixels);
+
+                //
+                // -------------------------------------------------------------
+
                 if (layer->type() != Layer::VECTOR || currentTool()->type() != SELECT)
                 {
                     painter.setPen(Qt::SolidLine);
